@@ -1,0 +1,51 @@
+global
+        log /dev/log    local0
+        log /dev/log    local1 notice
+        chroot /var/lib/haproxy
+        stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+        stats timeout 30s
+        user haproxy
+        group haproxy
+        daemon
+
+        # Default SSL material locations
+        ca-base /etc/ssl/certs
+        crt-base /etc/ssl/private
+
+        # See: https://ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4MXLN7vqHDXpL63sP+xrPzMJ9M4MM027cDyIUPZtDCy1LT+eNdmm5WQsVkwOeZjfyPd6A8YaOnOtwkNPPo20Ut93J1pPrVNkHXUSDV3URajtdpO/V          2nQpieA12FuLiexzkHFqiBF2HJK8SxIJc4LOPPneb4fLM4Qo/XgtpefwIdx0rGUw0Qgx5bRrDTXtMZLj7/h/JGwEBXv72IWzAJgmdpzxQHjBKCF5l6Ifs9ddbExcq/OGPXSZy9uBk/Wyk/GvA0OJ8VEs3Pwp6RqPpLbv+           e7UXGgIjKkGEhjiyhcCzV3/idlPYuucqz8SajbY2/xBKfhXB9ecn5dOAjH6Lz/P abdlouakialaoui11@gmail.com
+
+defaults
+        log     global
+        mode    http
+        option  httplog
+        option  dontlognull
+        timeout connect 5000
+        timeout client  50000
+        timeout server  50000
+        errorfile 400 /etc/haproxy/errors/400.http
+        errorfile 403 /etc/haproxy/errors/403.http
+        errorfile 408 /etc/haproxy/errors/408.http
+        errorfile 500 /etc/haproxy/errors/500.http
+        errorfile 502 /etc/haproxy/errors/502.http
+        errorfile 503 /etc/haproxy/errors/503.http
+        errorfile 504 /etc/haproxy/errors/504.http
+
+frontend www-http
+    bind   0.0.0.0:80
+    http-request set-header X-Forwarded-Proto http
+    default_backend www-backend
+frontend www-https
+    bind   0.0.0.0:443 ssl crt /etc/haproxy/certs/www.thepadj.tech.pem
+    http-request set-header X-Forwarded-Proto https
+    acl    letsencrypt-acl path_beg /.well-known/acme-challenge/
+    use_backend letsencrypt-backend if letsencrypt-acl
+    default_backend www-backend
+
+backend www-backend
+    balance  roundrobin
+    redirect scheme https if !{ ssl_fc }
+    server 1733-web-01 3.235.21.36:80 check
+    server 1733-web-02 34.139.50.126:80 check
+
+backend letsencrypt-backend
+    server letsencrypt 127.0.0.1:54321
