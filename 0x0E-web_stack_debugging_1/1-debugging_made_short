@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+service nginx stop > /dev/null
+echo -e 'server {\nlisten 80;\n}' > /etc/nginx/sites-available/default
+service nginx start > /dev/null
+service nginx status | grep -q not
