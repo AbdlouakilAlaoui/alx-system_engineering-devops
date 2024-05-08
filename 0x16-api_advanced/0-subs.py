@@ -12,7 +12,3 @@ def number_of_subscribers(subreddit):
         return subscribers
     else:
         return 0
-
-if __name__ == '__main__':
-    subreddit = input("Enter the subreddit name: ")
-    print(number_of_subscribers(subreddit))
