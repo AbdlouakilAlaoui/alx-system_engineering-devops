@@ -9,13 +9,16 @@ def top_ten(subreddit):
 
     if response.status_code == 200:
         data = response.json()
-        posts = data['data']['children']
-        for post in posts:
-            title = post['data']['title']
-            print(title)
+        if 'data' in data and 'children' in data['data']:
+            posts = data['data']['children']
+            for post in posts:
+                title = post['data']['title']
+                print(title)
+        else:
+            print("None")
     else:
         print("None")
 
 if __name__ == '__main__':
-    subreddit = input("Please pass an argument for the subreddit to search. ")
+    subreddit = input("Enter the subreddit name: ")
     top_ten(subreddit)
